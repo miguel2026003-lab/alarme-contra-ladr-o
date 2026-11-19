@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SentinelaBot – Alarme contra ladrão</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+  --bg:#f6f7fb; --surface:#ffffff; --text:#14182b; --muted:#5b627a;
+  --accent:#e11d48; --accent2:#2563eb; --border:#e1e4ee; --code:#0f172a; --codetext:#e2e8f0;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0b0e1a; --surface:#141932; --text:#eef0fa; --muted:#9aa3c0;
+    --accent:#fb4a6b; --accent2:#60a5fa; --border:#262d52; --code:#05070f; --codetext:#e2e8f0;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b0e1a; --surface:#141932; --text:#eef0fa; --muted:#9aa3c0;
+  --accent:#fb4a6b; --accent2:#60a5fa; --border:#262d52; --code:#05070f; --codetext:#e2e8f0;
+}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+.wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);border-bottom:1px solid var(--border)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.logo{font-weight:800;letter-spacing:.3px}
+.logo span{color:var(--accent)}
+nav ul{display:flex;gap:18px;list-style:none;margin:0;padding:0;overflow-x:auto}
+nav a{color:var(--muted);text-decoration:none;font-size:14px;white-space:nowrap}
+nav a:hover{color:var(--text)}
+header.hero{padding:72px 0 56px;text-align:center}
+.badge{display:inline-block;padding:4px 12px;border:1px solid var(--border);border-radius:999px;font-size:13px;color:var(--muted);background:var(--surface)}
+h1{font-size:clamp(34px,7vw,60px);line-height:1.1;margin:18px 0 14px}
+h1 em{font-style:normal;color:var(--accent)}
+.hero p{max-width:620px;margin:0 auto 28px;color:var(--muted);font-size:18px}
+.btn{display:inline-block;padding:12px 24px;border-radius:10px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;border:0;cursor:pointer;font-size:15px}
+.btn.alt{background:transparent;color:var(--text);border:1px solid var(--border);margin-left:8px}
+.radar{width:150px;height:150px;margin:0 auto 10px;position:relative;border-radius:50%;border:2px solid var(--accent2);background:radial-gradient(circle,transparent 30%,var(--border) 31%,transparent 32%,transparent 60%,var(--border) 61%,transparent 62%)}
+.radar::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,var(--accent2),transparent 25%);opacity:.5;animation:spin 3s linear infinite}
+.radar i{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent);top:30%;left:62%;animation:blink 1s infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{50%{opacity:.15}}
+@media (prefers-reduced-motion:reduce){.radar::after,.radar i{animation:none}}
+section{padding:56px 0}
+h2{font-size:30px;margin:0 0 8px}
+.sub{color:var(--muted);margin:0 0 28px}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card .ic{font-size:28px}
+.card h3{margin:8px 0 6px;font-size:18px}
+.card p{margin:0;color:var(--muted);font-size:15px}
+.steps{counter-reset:s;display:grid;gap:12px;padding:0;list-style:none}
+.steps li{counter-increment:s;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 16px 16px 60px;position:relative}
+.steps li::before{content:counter(s);position:absolute;left:16px;top:14px;width:30px;height:30px;border-radius:50%;background:var(--accent2);color:#fff;display:grid;place-items:center;font-weight:700}
+.table{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+table{width:100%;border-collapse:collapse;min-width:480px}
+th,td{padding:12px 16px;text-align:left;border-bottom:1px solid var(--border);font-size:15px}
+th{color:var(--muted);font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}
+tr:last-child td{border-bottom:0}
+pre{background:var(--code);color:var(--codetext);padding:18px;border-radius:12px;overflow-x:auto;font-size:13px;line-height:1.5;margin:0}
+.demo{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
+.status{font-size:22px;font-weight:700;margin:14px 0;padding:14px;border-radius:10px;background:var(--bg);border:1px solid var(--border)}
+.status.on{background:var(--accent);color:#fff;animation:blink2 .5s infinite}
+@keyframes blink2{50%{opacity:.6}}
+.team .card{text-align:center}
+.avatar{width:56px;height:56px;border-radius:50%;background:var(--accent2);color:#fff;display:grid;place-items:center;font-weight:700;font-size:20px;margin:0 auto 8px}
+footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <div class="logo">Sentinela<span>Bot</span></div>
+  <ul><li><a href="#como">Como funciona</a></li><li><a href="#pecas">Componentes</a></li><li><a href="#demo">Simulador</a></li><li><a href="#codigo">Código</a></li><li><a href="#equipe">Equipe</a></li></ul>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <div class="radar" aria-hidden="true"><i></i></div>
+  <span class="badge">Projeto de Robótica · Arduino</span>
+  <h1>Alarme inteligente <em>contra ladrão</em></h1>
+  <p>Um circuito feito com Arduino e sensor de luz (LDR): quando alguém entra no escuro ou tampa o sensor, o buzzer toca e o LED pisca.</p>
+  <a class="btn" href="#demo">Testar o simulador</a><a class="btn alt" href="#como">Ver como funciona</a>
+</div></header>
+
+<section id="como"><div class="wrap">
+  <h2>Como funciona</h2>
+  <p class="sub">Quatro etapas simples, do sensor até o alerta.</p>
+  <ol class="steps">
+    <li><b>Ler a luz.</b> O Arduino lê o sensor LDR no pino A0 o tempo todo e mostra o valor no monitor serial.</li>
+    <li><b>Detectar a sombra.</b> Se a leitura cair abaixo de 400, o sistema entende que alguém bloqueou a luz ou apagou a iluminação.</li>
+    <li><b>Disparar o alarme.</b> O buzzer toca a 1000 Hz no pino 11 e o LED do pino 12 pisca a cada 200 ms.</li>
+    <li><b>Voltar ao normal.</b> Quando a luz volta, o LED e o buzzer desligam sozinhos.</li>
+  </ol>
+</div></section>
+
+<section id="recursos"><div class="wrap">
+  <h2>Recursos</h2>
+  <p class="sub">O que o SentinelaBot faz.</p>
+  <div class="grid">
+    <div class="card"><div class="ic">💡</div><h3>Sensor de luz</h3><p>O LDR percebe quando a luz diminui perto do objeto protegido.</p></div>
+    <div class="card"><div class="ic">🔔</div><h3>Sirene e LED</h3><p>Buzzer e LED piscando para assustar o intruso.</p></div>
+    <div class="card"><div class="ic">📟</div><h3>Monitor serial</h3><p>Mostra a leitura do LDR em tempo real para calibrar o limite.</p></div>
+    <div class="card"><div class="ic">🔄</div><h3>Rearme automático</h3><p>Quando a luz volta ao normal, o alarme se desliga sozinho.</p></div>
+  </div>
+</div></section>
+
+<section id="pecas"><div class="wrap">
+  <h2>Componentes</h2>
+  <p class="sub">Lista de materiais do protótipo.</p>
+  <div class="table"><table>
+    <tr><th>Peça</th><th>Qtd.</th><th>Função</th></tr>
+    <tr><td>Arduino Uno</td><td>1</td><td>Cérebro do projeto</td></tr>
+    <tr><td>Sensor LDR (fotoresistor)</td><td>1</td><td>Mede a luz do ambiente (pino A0)</td></tr>
+    <tr><td>Resistor 10 kΩ</td><td>1</td><td>Divisor de tensão do LDR</td></tr>
+    <tr><td>Buzzer</td><td>1</td><td>Sirene (pino 11)</td></tr>
+    <tr><td>LED vermelho + resistor 220 Ω</td><td>1</td><td>Sinal visual (pino 12)</td></tr>
+    
+    
+    <tr><td>Protoboard e jumpers</td><td>1</td><td>Ligações</td></tr>
+  </table></div>
+</div></section>
+
+<section id="demo"><div class="wrap">
+  <h2>Simulador</h2>
+  <p class="sub">Arraste o controle para simular a luz que chega no LDR. Ligue o som do aparelho para ouvir o buzzer.</p>
+  <div class="demo">
+    <div id="st" class="status">🟢 Luz normal, alarme desligado</div>
+    <label for="ldr">Leitura do LDR: <b id="v">800</b> (limite: 400)</label><br>
+    <input type="range" id="ldr" min="0" max="1023" value="800" style="width:100%;max-width:420px;margin-top:12px">
+  </div>
+</div></section>
+
+<section id="codigo"><div class="wrap">
+  <h2>Código do Arduino</h2>
+  <p class="sub">Código real do projeto: o alarme dispara quando o LDR detecta sombra.</p>
+<pre>// ====================================================
+// Circuito Antifurto: LDR + Buzzer + LED Piscando
+// ====================================================
+const int pinLDR = A0;
+const int pinLED = 12;
+const int pinBuzzer = 11;
+const int LIMIAR_SOMBRA = 400;
+
+void setup() {
+  pinMode(pinLED, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Leitura do sensor LDR
+  int leituraLDR = analogRead(pinLDR);
+  Serial.print("Leitura LDR: ");
+  Serial.println(leituraLDR);
+
+  // Verifica a luminosidade
+  if (leituraLDR &lt; LIMIAR_SOMBRA) {
+    // Ativa o alarme
+    digitalWrite(pinLED, HIGH);
+    tone(pinBuzzer, 1000);
+    delay(200);
+
+    // Pisca o LED e interrompe o buzzer
+    digitalWrite(pinLED, LOW);
+    noTone(pinBuzzer);
+    delay(200);
+  } else {
+    // Mantém o sistema desligado
+    digitalWrite(pinLED, LOW);
+    noTone(pinBuzzer);
+    delay(100);
+  }
+}</pre>
+</div></section>
+
+<section id="equipe"><div class="wrap team">
+  <h2>Equipe</h2>
+  <p class="sub">Os 5 integrantes do projeto.</p>
+  <div class="grid">
+    <div class="card"><div class="avatar">L</div><h3>Luiz Fernando</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">M</div><h3>Miguel Alexandre</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">L</div><h3>Lorenzo Dantas</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">L</div><h3>Leonardo Silva</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">V</div><h3>Vitor Furtado</h3><p>Integrante da equipe</p></div>
+  </div></section>
+
+<footer><div class="wrap">SentinelaBot · Projeto de Robótica · Feito com Arduino</div></footer>
+
+<script>
+(function(){
+  var st=document.getElementById('st'),r=document.getElementById('ldr'),v=document.getElementById('v');
+  var ac=null,osc=null,gain=null,timer=null;
+  function startSound(){
+    try{
+      if(osc)return;
+      if(!ac){ac=new (window.AudioContext||window.webkitAudioContext)();}
+      if(ac.state==='suspended')ac.resume();
+      osc=ac.createOscillator();gain=ac.createGain();
+      osc.type='square';osc.frequency.value=1000;gain.gain.value=0;
+      osc.connect(gain);gain.connect(ac.destination);osc.start();
+      var on=true;
+      function tick(){gain.gain.value=on?0.08:0;on=!on;}
+      tick();timer=setInterval(tick,200);
+    }catch(e){}
+  }
+  function stopSound(){
+    clearInterval(timer);timer=null;
+    try{if(osc){osc.stop();osc.disconnect();}}catch(e){}
+    osc=null;
+  }
+  function up(){var x=+r.value;v.textContent=x;
+    if(x<400){st.textContent='🚨 Sombra detectada! Buzzer e LED ligados';st.className='status on';startSound();}
+    else{st.textContent='🟢 Luz normal, alarme desligado';st.className='status';stopSound();}}
+  r.oninput=up;up();
+})();
+</script>
+</body>
+</html>
