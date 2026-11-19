@@ -85,7 +85,7 @@ footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color
   <div class="radar" aria-hidden="true"><i></i></div>
   <span class="badge">Projeto de Robótica · Arduino</span>
   <h1>Alarme inteligente <em>contra ladrão</em></h1>
-  <p>Um sistema de segurança feito com sensores e Arduino que detecta movimento, dispara a sirene e avisa o dono da casa na hora.</p>
+  <p>Um circuito feito com Arduino e sensor de luz (LDR): quando alguém entra no escuro ou tampa o sensor, o buzzer toca e o LED pisca.</p>
   <a class="btn" href="#demo">Testar o simulador</a><a class="btn alt" href="#como">Ver como funciona</a>
 </div></header>
 
@@ -93,10 +93,10 @@ footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color
   <h2>Como funciona</h2>
   <p class="sub">Quatro etapas simples, do sensor até o alerta.</p>
   <ol class="steps">
-    <li><b>Armar o sistema.</b> O dono digita a senha no teclado ou aperta o botão e o alarme entra em vigilância.</li>
-    <li><b>Detectar a invasão.</b> O sensor PIR percebe o calor do corpo em movimento e o sensor ultrassônico mede a distância até a porta.</li>
-    <li><b>Disparar o alarme.</b> O Arduino liga a sirene (buzzer) e o LED vermelho piscando.</li>
-    <li><b>Avisar o dono.</b> Com um módulo Wi-Fi (ESP8266 ou ESP32), o projeto manda uma notificação para o celular.</li>
+    <li><b>Ler a luz.</b> O Arduino lê o sensor LDR no pino A0 o tempo todo e mostra o valor no monitor serial.</li>
+    <li><b>Detectar a sombra.</b> Se a leitura cair abaixo de 400, o sistema entende que alguém bloqueou a luz ou apagou a iluminação.</li>
+    <li><b>Disparar o alarme.</b> O buzzer toca a 1000 Hz no pino 11 e o LED do pino 12 pisca a cada 200 ms.</li>
+    <li><b>Voltar ao normal.</b> Quando a luz volta, o LED e o buzzer desligam sozinhos.</li>
   </ol>
 </div></section>
 
@@ -104,10 +104,10 @@ footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color
   <h2>Recursos</h2>
   <p class="sub">O que o SentinelaBot faz.</p>
   <div class="grid">
-    <div class="card"><div class="ic">👁️</div><h3>Detecção de movimento</h3><p>Sensor PIR com alcance de cerca de 6 metros.</p></div>
-    <div class="card"><div class="ic">🔔</div><h3>Sirene e luz</h3><p>Buzzer alto e LED vermelho para assustar o intruso.</p></div>
-    <div class="card"><div class="ic">🔐</div><h3>Senha</h3><p>Só quem sabe o código consegue desarmar o alarme.</p></div>
-    <div class="card"><div class="ic">📱</div><h3>Alerta no celular</h3><p>Notificação enviada pela internet quando algo dispara.</p></div>
+    <div class="card"><div class="ic">💡</div><h3>Sensor de luz</h3><p>O LDR percebe quando a luz diminui perto do objeto protegido.</p></div>
+    <div class="card"><div class="ic">🔔</div><h3>Sirene e LED</h3><p>Buzzer e LED piscando para assustar o intruso.</p></div>
+    <div class="card"><div class="ic">📟</div><h3>Monitor serial</h3><p>Mostra a leitura do LDR em tempo real para calibrar o limite.</p></div>
+    <div class="card"><div class="ic">🔄</div><h3>Rearme automático</h3><p>Quando a luz volta ao normal, o alarme se desliga sozinho.</p></div>
   </div>
 </div></section>
 
@@ -117,83 +117,89 @@ footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color
   <div class="table"><table>
     <tr><th>Peça</th><th>Qtd.</th><th>Função</th></tr>
     <tr><td>Arduino Uno</td><td>1</td><td>Cérebro do projeto</td></tr>
-    <tr><td>Sensor PIR (HC-SR501)</td><td>1</td><td>Detecta movimento</td></tr>
-    <tr><td>Sensor ultrassônico (HC-SR04)</td><td>1</td><td>Mede distância</td></tr>
-    <tr><td>Buzzer ativo</td><td>1</td><td>Sirene</td></tr>
-    <tr><td>LED vermelho + resistor 220 Ω</td><td>1</td><td>Sinal visual</td></tr>
-    <tr><td>Botão (push button)</td><td>1</td><td>Armar e desarmar</td></tr>
-    <tr><td>ESP8266 / ESP32 (opcional)</td><td>1</td><td>Envia alerta por Wi-Fi</td></tr>
+    <tr><td>Sensor LDR (fotoresistor)</td><td>1</td><td>Mede a luz do ambiente (pino A0)</td></tr>
+    <tr><td>Resistor 10 kΩ</td><td>1</td><td>Divisor de tensão do LDR</td></tr>
+    <tr><td>Buzzer</td><td>1</td><td>Sirene (pino 11)</td></tr>
+    <tr><td>LED vermelho + resistor 220 Ω</td><td>1</td><td>Sinal visual (pino 12)</td></tr>
+    
+    
     <tr><td>Protoboard e jumpers</td><td>1</td><td>Ligações</td></tr>
   </table></div>
 </div></section>
 
 <section id="demo"><div class="wrap">
   <h2>Simulador</h2>
-  <p class="sub">Experimente o alarme direto aqui na página.</p>
+  <p class="sub">Arraste o controle para simular a luz que chega no LDR.</p>
   <div class="demo">
-    <div id="st" class="status">🟢 Alarme desarmado</div>
-    <button class="btn" id="b1">Armar</button>
-    <button class="btn alt" id="b2">Simular invasão</button>
-    <button class="btn alt" id="b3">Desarmar</button>
+    <div id="st" class="status">🟢 Luz normal, alarme desligado</div>
+    <label for="ldr">Leitura do LDR: <b id="v">800</b> (limite: 400)</label><br>
+    <input type="range" id="ldr" min="0" max="1023" value="800" style="width:100%;max-width:420px;margin-top:12px">
   </div>
 </div></section>
 
 <section id="codigo"><div class="wrap">
   <h2>Código do Arduino</h2>
-  <p class="sub">Exemplo básico para começar. Ajuste os pinos conforme sua montagem.</p>
-<pre>const int PIR = 2;
-const int BUZZER = 8;
-const int LED = 9;
-const int BOTAO = 4;
-bool armado = false;
+  <p class="sub">Código real do projeto: o alarme dispara quando o LDR detecta sombra.</p>
+<pre>// ====================================================
+// Circuito Antifurto: LDR + Buzzer + LED Piscando
+// ====================================================
+const int pinLDR = A0;
+const int pinLED = 12;
+const int pinBuzzer = 11;
+const int LIMIAR_SOMBRA = 400;
 
 void setup() {
-  pinMode(PIR, INPUT);
-  pinMode(BUZZER, OUTPUT);
-  pinMode(LED, OUTPUT);
-  pinMode(BOTAO, INPUT_PULLUP);
+  pinMode(pinLED, OUTPUT);
+  pinMode(pinBuzzer, OUTPUT);
+  Serial.begin(9600);
 }
 
 void loop() {
-  if (digitalRead(BOTAO) == LOW) {
-    armado = !armado;
-    delay(500);
-  }
-  if (armado &amp;&amp; digitalRead(PIR) == HIGH) {
-    digitalWrite(BUZZER, HIGH);
-    digitalWrite(LED, HIGH);
+  // Leitura do sensor LDR
+  int leituraLDR = analogRead(pinLDR);
+  Serial.print("Leitura LDR: ");
+  Serial.println(leituraLDR);
+
+  // Verifica a luminosidade
+  if (leituraLDR &lt; LIMIAR_SOMBRA) {
+    // Ativa o alarme
+    digitalWrite(pinLED, HIGH);
+    tone(pinBuzzer, 1000);
     delay(200);
-    digitalWrite(LED, LOW);
+
+    // Pisca o LED e interrompe o buzzer
+    digitalWrite(pinLED, LOW);
+    noTone(pinBuzzer);
     delay(200);
   } else {
-    digitalWrite(BUZZER, LOW);
-    digitalWrite(LED, LOW);
+    // Mantém o sistema desligado
+    digitalWrite(pinLED, LOW);
+    noTone(pinBuzzer);
+    delay(100);
   }
 }</pre>
 </div></section>
 
 <section id="equipe"><div class="wrap team">
   <h2>Equipe</h2>
-  <p class="sub">Troque pelos nomes de vocês.</p>
+  <p class="sub">Os 5 integrantes do projeto.</p>
   <div class="grid">
-    <div class="card"><div class="avatar">A</div><h3>Integrante 1</h3><p>Montagem e circuito</p></div>
-    <div class="card"><div class="avatar">B</div><h3>Integrante 2</h3><p>Programação</p></div>
-    <div class="card"><div class="avatar">C</div><h3>Integrante 3</h3><p>Pesquisa e apresentação</p></div>
-  </div>
-</div></section>
+    <div class="card"><div class="avatar">L</div><h3>Luiz Fernando</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">M</div><h3>Miguel Alexandre</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">L</div><h3>Lorenzo Dantas</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">L</div><h3>Leonardo Silva</h3><p>Integrante da equipe</p></div>
+    <div class="card"><div class="avatar">V</div><h3>Vitor Furtado</h3><p>Integrante da equipe</p></div>
+  </div></section>
 
 <footer><div class="wrap">SentinelaBot · Projeto de Robótica · Feito com Arduino</div></footer>
 
 <script>
 (function(){
-  var st=document.getElementById('st'),armed=false;
-  function set(t,on){st.textContent=t;st.className='status'+(on?' on':'');}
-  document.getElementById('b1').onclick=function(){armed=true;set('🟡 Alarme armado, vigiando…',false);};
-  document.getElementById('b2').onclick=function(){
-    if(armed){set('🚨 INVASOR DETECTADO! Sirene ligada',true);}
-    else{set('🟢 Alarme desarmado, nada acontece',false);}
-  };
-  document.getElementById('b3').onclick=function(){armed=false;set('🟢 Alarme desarmado',false);};
+  var st=document.getElementById('st'),r=document.getElementById('ldr'),v=document.getElementById('v');
+  function up(){var x=+r.value;v.textContent=x;
+    if(x<400){st.textContent='🚨 Sombra detectada! Buzzer e LED ligados';st.className='status on';}
+    else{st.textContent='🟢 Luz normal, alarme desligado';st.className='status';}}
+  r.oninput=up;up();
 })();
 </script>
 </body>
